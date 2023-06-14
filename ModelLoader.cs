@@ -13,6 +13,9 @@ using UnityEngine.EventSystems;
 public class ModelLoader : MonoBehaviour
 {
     public string modelsFolderPath; // The path to the models folder inside Resources folder
+    public string SagittalModelsFolderPath; // The alternative path to the models folder
+    public string CoronalModelsFolderPath;
+    private bool isAlternativePath = false; // Flag to track the current path state
     private string[] desiredNames = {
         "left iliac vein", "left iliac vein", "cava and right iliac vein", "cava and renal vein", "right gonadal vein",
         "left gonadal vein", "cava and right iliac vein", "portal venous system", "right gonadal artery", "right iliac artery",
@@ -26,9 +29,10 @@ public class ModelLoader : MonoBehaviour
 
     public GameObject modelsParent; // Parent GameObject to hold the instantiated models
     public string cameraName;
-    public GameObject tipParent; // Parent GameObject to hold the instantiated tool tip
+    //public GameObject tipParent; // Parent GameObject to hold the instantiated tool tip
     // New variables for the button and its states
     private GameObject mainButton;
+    private GameObject changeViewButton;
     private bool areModelsShown = true;
 
     private void Start()
@@ -42,11 +46,11 @@ public class ModelLoader : MonoBehaviour
         // Call the method to display Unity screen in two halves
         DisplayScreenInTwoHalves();
 
-        // Call the method to create a tool tip
-        //ToolTip();
-
         //Call the method to create main button for show or hide all organs
         MainButton();
+
+        // Create and configure the button
+        CreateChangeViewButton();
 
 
     }
@@ -349,7 +353,7 @@ public class ModelLoader : MonoBehaviour
     private void MainButton()
     {
         // Create a Canvas GameObject
-        GameObject canvasObject = new GameObject("Canvas");
+        GameObject canvasObject = new GameObject("CanvasShowOrgans");
         Canvas canvas = canvasObject.AddComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
         canvasObject.AddComponent<CanvasScaler>();
@@ -411,7 +415,10 @@ public class ModelLoader : MonoBehaviour
 
         // Set the parent of the button GameObject
         buttonObject.transform.SetParent(canvasObject.transform, false);
+
     }
+
+
 
 
     // Function for toggling the visibility of the models
@@ -474,5 +481,136 @@ public class ModelLoader : MonoBehaviour
 
     }
 
-}
+    
+    // Method to create and configure the change view button
+    private void CreateChangeViewButton()
+    {
+        // Create a Canvas GameObject
+        GameObject canvasObject = new GameObject("CanvasView");
+        Canvas canvas = canvasObject.AddComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvasObject.AddComponent<CanvasScaler>();
+        canvasObject.AddComponent<GraphicRaycaster>();
 
+        // Set the Canvas dimensions to cover the entire screen
+        RectTransform canvasRectTransform = canvas.GetComponent<RectTransform>();
+        canvasRectTransform.anchorMin = Vector2.zero;
+        canvasRectTransform.anchorMax = Vector2.one;
+        canvasRectTransform.offsetMin = Vector2.zero;
+        canvasRectTransform.offsetMax = Vector2.zero;
+
+        // Create a Button GameObject as a child of the Canvas
+        GameObject buttonObject = new GameObject("Change view button 2");
+        buttonObject.transform.SetParent(canvasObject.transform, false);
+        RectTransform buttonRectTransform = buttonObject.AddComponent<RectTransform>();
+
+        // Set the position and size of the button
+        buttonRectTransform.anchorMin = new Vector2(0f, 1f);
+        buttonRectTransform.anchorMax = new Vector2(0f, 1f);
+        buttonRectTransform.pivot = new Vector2(0f, 1f);
+        buttonRectTransform.anchoredPosition = new Vector2(353, -470f);
+        buttonRectTransform.sizeDelta = new Vector2(100f, 30f);
+
+        // Add the Button component to the button GameObject
+        Button buttonComponent = buttonObject.AddComponent<Button>();
+
+        // Add a Text component to the button GameObject and set its properties
+        GameObject textObject = new GameObject("Text");
+        textObject.transform.SetParent(buttonObject.transform, false);
+        RectTransform textRectTransform = textObject.AddComponent<RectTransform>();
+        Text textComponent = textObject.AddComponent<Text>();
+        textComponent.text = "Change View";
+        textComponent.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+        textComponent.fontStyle = FontStyle.Bold; // Set the font style to bold
+        textComponent.alignment = TextAnchor.MiddleCenter;
+        textComponent.color = Color.white;
+
+        // Set the position and size of the text
+        textRectTransform.anchorMin = Vector2.zero;
+        textRectTransform.anchorMax = Vector2.one;
+        textRectTransform.pivot = new Vector2(0.5f, 0.5f);
+        textRectTransform.anchoredPosition = Vector2.zero;
+        textRectTransform.sizeDelta = Vector2.zero;
+
+        // Set the text font size based on the button size
+        float fontSize = buttonRectTransform.sizeDelta.y * 0.5f;
+        textComponent.fontSize = Mathf.FloorToInt(fontSize);
+
+        // Add a yellow Image component to the button GameObject
+        Image buttonImage = buttonObject.AddComponent<Image>();
+        buttonImage.color = new Color(0.12f, 0.44f, 0.93f); // Set the color to 0C6FEE (hex) or (12, 111, 238) (RGB)
+
+        // Assign the MainButton to the buttonObject
+        changeViewButton = buttonObject;
+
+        // Set the parent of the button GameObject
+        buttonObject.transform.SetParent(canvasObject.transform, false);
+
+        // Add an onClick event to the button to call the ToggleModels function
+        buttonComponent.onClick.AddListener(ToggleModelsFolderPath);
+        buttonComponent.onClick.AddListener(() => DestroyChildObjects(modelsParent.transform));
+
+        // Add a button click event listener
+        buttonComponent.onClick.AddListener(LoadModels);
+
+        buttonComponent.onClick.AddListener(AddMaterial);
+        buttonComponent.onClick.AddListener(DestroyCanvasObject);
+        buttonComponent.onClick.AddListener(MainButton);
+        
+
+       
+    }
+
+
+    // Method to toggle between models folder paths when the button is clicked
+    private void ToggleModelsFolderPath()
+    {
+        // Toggle the flag between the alternative path and the default path
+        isAlternativePath = !isAlternativePath;
+
+        // Update the models folder path based on the current state
+        if (isAlternativePath)
+        {
+            UpdateModelsFolderPath(SagittalModelsFolderPath);
+
+            
+        }
+
+        else
+        {
+            UpdateModelsFolderPath(CoronalModelsFolderPath);
+        }
+    }
+
+    // Method to update models folder path and reload models
+    public void UpdateModelsFolderPath(string newPath)
+    {
+        modelsFolderPath = newPath;
+        LoadModels();
+    }
+
+    public void DestroyChildObjects(Transform parentTransform)
+    {
+        // Get all child objects of the parent
+        Transform[] childTransforms = parentTransform.GetComponentsInChildren<Transform>();
+
+        // Loop through each child transform
+        foreach (Transform childTransform in childTransforms)
+        {
+            // Exclude the parent and the child object containing "marker" from destruction
+            if (childTransform != parentTransform && !childTransform.name.Contains("marker"))
+            {
+                // Destroy the child gameobject
+                Destroy(childTransform.gameObject);
+            }
+        }
+    }
+
+    public void DestroyCanvasObject()
+    {
+        GameObject canvasObject = GameObject.Find("CanvasShowOrgans");
+        Destroy(canvasObject);
+        
+    }
+
+}
