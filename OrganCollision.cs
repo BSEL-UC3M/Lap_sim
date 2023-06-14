@@ -14,7 +14,7 @@ public class OrganCollision : MonoBehaviour
 
         if (organTextBox == null)
         {
-            GameObject canvas = GameObject.Find("Canvas");
+            GameObject canvas = GameObject.Find("CanvasOrgan");
             organTextBox = canvas.transform.Find("Organ text box").GetComponent<TextMeshProUGUI>();
         }
     }
