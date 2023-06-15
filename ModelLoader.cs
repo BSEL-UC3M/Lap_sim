@@ -16,6 +16,8 @@ public class ModelLoader : MonoBehaviour
     public string SagittalModelsFolderPath; // The alternative path to the models folder
     public string CoronalModelsFolderPath;
     private bool isAlternativePath = false; // Flag to track the current path state
+    public GameObject sagittalGameObject; //For HalfDesing with both supports. 
+    public GameObject coronalGameObject;
     private string[] desiredNames = {
         "left iliac vein", "left iliac vein", "cava and right iliac vein", "cava and renal vein", "right gonadal vein",
         "left gonadal vein", "cava and right iliac vein", "portal venous system", "right gonadal artery", "right iliac artery",
@@ -51,6 +53,9 @@ public class ModelLoader : MonoBehaviour
 
         // Create and configure the button
         CreateChangeViewButton();
+
+        // Deactivate the sagittal game object and its children by default
+        sagittalGameObject.SetActive(false);
 
 
     }
@@ -132,7 +137,7 @@ public class ModelLoader : MonoBehaviour
             else
             {
                 // Handle the case where there are more models than names in the array
-                instantiatedModel.name = "NewName" + i.ToString();
+                instantiatedModel.name = "ARSupportPiece" + i.ToString();
             }
         }
     }
@@ -437,7 +442,8 @@ public class ModelLoader : MonoBehaviour
             if (meshRenderer != null)
             {
                 string modelName = childTransform.name;
-                if (modelName.Contains("marker"))
+                if(modelName.Contains("marker"))
+
                 {
                     meshRenderer.enabled = true;
                 }
@@ -508,8 +514,8 @@ public class ModelLoader : MonoBehaviour
         buttonRectTransform.anchorMin = new Vector2(0f, 1f);
         buttonRectTransform.anchorMax = new Vector2(0f, 1f);
         buttonRectTransform.pivot = new Vector2(0f, 1f);
-        buttonRectTransform.anchoredPosition = new Vector2(353, -470f);
-        buttonRectTransform.sizeDelta = new Vector2(100f, 30f);
+        buttonRectTransform.position = new Vector3(250f, -470f, 0f);
+        buttonRectTransform.sizeDelta = new Vector2(200f, 30f);
 
         // Add the Button component to the button GameObject
         Button buttonComponent = buttonObject.AddComponent<Button>();
@@ -519,7 +525,7 @@ public class ModelLoader : MonoBehaviour
         textObject.transform.SetParent(buttonObject.transform, false);
         RectTransform textRectTransform = textObject.AddComponent<RectTransform>();
         Text textComponent = textObject.AddComponent<Text>();
-        textComponent.text = "Change View";
+        textComponent.text = "Change to Sagittal View";
         textComponent.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
         textComponent.fontStyle = FontStyle.Bold; // Set the font style to bold
         textComponent.alignment = TextAnchor.MiddleCenter;
@@ -538,7 +544,7 @@ public class ModelLoader : MonoBehaviour
 
         // Add a yellow Image component to the button GameObject
         Image buttonImage = buttonObject.AddComponent<Image>();
-        buttonImage.color = new Color(0.12f, 0.44f, 0.93f); // Set the color to 0C6FEE (hex) or (12, 111, 238) (RGB)
+        buttonImage.color = Color.blue;
 
         // Assign the MainButton to the buttonObject
         changeViewButton = buttonObject;
@@ -562,23 +568,49 @@ public class ModelLoader : MonoBehaviour
     }
 
 
-    // Method to toggle between models folder paths when the button is clicked
+    // Method to toggle between models folder paths when the button is clicked, activating and deactivating tool gameobjects and changing the color and text of the button previously created. 
     private void ToggleModelsFolderPath()
     {
         // Toggle the flag between the alternative path and the default path
         isAlternativePath = !isAlternativePath;
+        // Get the Text component of the button
+        Text textComponent = changeViewButton.GetComponentInChildren<Text>();
+        // Get the Image component of the button
+        Image buttonImage = changeViewButton.GetComponent<Image>();
 
         // Update the models folder path based on the current state
         if (isAlternativePath)
         {
             UpdateModelsFolderPath(SagittalModelsFolderPath);
+            // Activate the sagittal game object and its children
+            sagittalGameObject.SetActive(true);
 
-            
+            // Deactivate the coronal game object and its children
+            coronalGameObject.SetActive(false);
+
+            // Change the text
+            textComponent.text = "Change to Coronal View";
+
+            // Change the color
+            buttonImage.color = Color.magenta;
+
+
         }
 
         else
         {
             UpdateModelsFolderPath(CoronalModelsFolderPath);
+            // Activate the coronal game object and its children
+            coronalGameObject.SetActive(true);
+
+            // Deactivate the sagittal game object and its children
+            sagittalGameObject.SetActive(false);
+
+            // Change the text
+            textComponent.text = "Change to Sagittal View";
+
+            // Change the color
+            buttonImage.color = Color.blue;
         }
     }
 
@@ -610,7 +642,6 @@ public class ModelLoader : MonoBehaviour
     {
         GameObject canvasObject = GameObject.Find("CanvasShowOrgans");
         Destroy(canvasObject);
-        
     }
 
 }
